@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<canvas id="canvas" height="1000" width="1000"></canvas>
+
+<script defer>
+    function base64ToBytes(base64) {
+        const binString = atob(base64);
+        return Uint8Array.from(binString, (m) => m.codePointAt(0));
+    }
+
+    function checkNewBox(canvas, event) {
+        let rect = canvas.getBoundingClientRect();
+        let x = event.clientX - rect.left;
+        let y = event.clientY - rect.top;
+        let index = Math.floor(x / 10) + Math.floor(y / 10) * 100
+        fetch(`/check?id=${index}`).then(load)
+    }
+
+    const canvas = document.getElementById("canvas");
+    canvas.addEventListener("mousedown", function (e) {
+        checkNewBox(canvas, e);
+    });
+    const ctx = canvas.getContext("2d");
+
+    async function get_data() {
+        const resp = await fetch("/refresh");
+        return base64ToBytes(await resp.text());
+    }
+    function load() {
+        get_data().then((data) => {
+            for (let i = 0; i < 100; i++) {
+                for (let j = 0; j < 100; j++) {
+                    let index = i * 100 + j;
+                    let num = data[Math.floor(index / 8)];
+                    if ((num >> (7 - index % 8)) & 1) {
+                        ctx.fillRect(10 * j, 10 * i, 10, 10);
+                    } else {
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(10 * j, 10 * i, 10, 10);
+                        ctx.fillStyle = 'black';
+                    }
+                }
+            }
+        });
+    }
+    // load()
+    setInterval(load, 2000)
+</script>
