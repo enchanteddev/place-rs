@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<div id="text"></div>
 <canvas id="canvas" height="1000" width="1000"></canvas>
 
 <script defer>
@@ -20,6 +21,7 @@
     }
 
     const canvas = document.getElementById("canvas");
+    const text = document.getElementById("text");
     canvas.addEventListener("mousedown", function (e) {
         checkNewBox(canvas, e);
     });
@@ -34,7 +36,8 @@
         console.log("received message: " + e.data);
         let tokens = e.data.split(" ");
         let index = Number(tokens[0]);
-        let checked = tokens[1] == 'true'
+        let checked = tokens[1] == 'true';
+        let online = Number(tokens[2]);
         let i = Math.floor(index / 100);
         let j = index % 100;
         console.log(tokens, index, e[0], checked, i, j);
@@ -45,6 +48,7 @@
             ctx.fillRect(10 * j, 10 * i, 10, 10);
             ctx.fillStyle = 'black';
         }
+        text.innerHTML = `${online - 1} online`
     }
 
 
@@ -78,7 +82,8 @@
                 }
             }
         });
+        console.log("refreshed")
     }
     load()
-    // setInterval(load, 2000)
+    setInterval(load, 60000)
 </script>

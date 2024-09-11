@@ -80,7 +80,7 @@ pub async fn ws_transmitter(socket: WebSocket, state: Arc<RwLock<AppState>>) {
                 write_store(&write_state.data, write_state.counter);
             }
             
-            let _ = tx.send(format!("{text} {}", !old_val));
+            let _ = tx.send(format!("{text} {} {}", !old_val, tx.receiver_count()));
         }
     });
 
