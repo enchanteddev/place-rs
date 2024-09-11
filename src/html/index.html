@@ -1,12 +1,36 @@
 <!DOCTYPE html>
 <div id="text"></div>
 <canvas id="canvas" height="1000" width="1000"></canvas>
+<div class="container">
+    <p id="coord">xpos = 0, ypos = 0</p>
+    <div id="picker">
+        <div class="colorbox" style="background-color: #ff4500;" onclick="sendWSReq('red')"></div>
+        <div class="colorbox" style="background-color: #ffa800;" onclick="sendWSReq('orange')"></div>
+        <div class="colorbox" style="background-color: #ffd635;" onclick="sendWSReq('yellow')"></div>
+        <div class="colorbox" style="background-color: #00a368;" onclick="sendWSReq('green')"></div>
+        <div class="colorbox" style="background-color: #7eed56;" onclick="sendWSReq('lgreen')"></div>
+        <div class="colorbox" style="background-color: #2450a4;" onclick="sendWSReq('blue')"></div>
+        <div class="colorbox" style="background-color: #3690ea;" onclick="sendWSReq('lblue')"></div>
+        <div class="colorbox" style="background-color: #51e9f4;" onclick="sendWSReq('cyan')"></div>
+        <div class="colorbox" style="background-color: #811e9f;" onclick="sendWSReq('purple')"></div>
+        <div class="colorbox" style="background-color: #b44ac0;" onclick="sendWSReq('lpurple')"></div>
+        <div class="colorbox" style="background-color: #ff99aa;" onclick="sendWSReq('pink')"></div>
+        <div class="colorbox" style="background-color: #9c6926;" onclick="sendWSReq('brown')"></div>
+        <div class="colorbox" style="background-color: #000;" onclick="sendWSReq('black')"></div>
+        <div class="colorbox" style="background-color: #898d90;" onclick="sendWSReq('gray')"></div>
+        <div class="colorbox" style="background-color: #d4d7d9;" onclick="sendWSReq('lgray')"></div>
+        <div class="colorbox" style="background-color: #fff;" onclick="sendWSReq('white')"></div>
+    </div>
+</div>
 
 <script defer>
+    const side = 100;
     function base64ToBytes(base64) {
         const binString = atob(base64);
         return Uint8Array.from(binString, (m) => m.codePointAt(0));
     }
+
+    const colormap = {'red': '#ff4500', 'orange': '#ffa800', 'yellow': '#ffd635', 'green': '#00a368', 'lgreen': '#7eed56', 'blue': '#2450a4', 'lblue': '#3690ea', 'cyan': '#51e9f4', 'purple': '#811e9f', 'lpurple': '#b44ac0', 'pink': '#ff99aa', 'brown': '#9c6926', 'black': '#000', 'gray': '#898d90', 'lgray': '#d4d7d9', 'white': '#fff'}
 
     function convert_to_ws(relative_path) {
         var loc = window.location, new_uri;
@@ -22,6 +46,7 @@
 
     const canvas = document.getElementById("canvas");
     const text = document.getElementById("text");
+    const coord = document.getElementById("coord");
     canvas.addEventListener("mousedown", function (e) {
         checkNewBox(canvas, e);
     });
@@ -36,29 +61,35 @@
         console.log("received message: " + e.data);
         let tokens = e.data.split(" ");
         let index = Number(tokens[0]);
-        let checked = tokens[1] == 'true';
+        let color = colormap[tokens[1].toLowerCase()]
         let online = Number(tokens[2]);
-        let i = Math.floor(index / 100);
-        let j = index % 100;
-        console.log(tokens, index, e[0], checked, i, j);
-        if (checked) {
-            ctx.fillRect(10 * j, 10 * i, 10, 10);
-        } else {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(10 * j, 10 * i, 10, 10);
-            ctx.fillStyle = 'black';
-        }
+        let i = Math.floor(index / side);
+        let j = index % side;
+        console.log(tokens, index, e[0], color, i, j);
+        ctx.fillStyle = color;
+        ctx.fillRect(10 * j, 10 * i, 10, 10);
+            // ctx.fillStyle = 'black';
         text.innerHTML = `${online - 1} online`
     }
 
+
+    let xpos = 0, ypos = 0;
 
     function checkNewBox(canvas, event) {
         let rect = canvas.getBoundingClientRect();
         let x = event.clientX - rect.left;
         let y = event.clientY - rect.top;
-        let index = Math.floor(x / 10) + Math.floor(y / 10) * 100
         // fetch(`/check?id=${index}`).then(load)
-        ws.send(`${index}`)
+        xpos = Math.floor(x / 10);
+        ypos = Math.floor(y / 10);
+        coord.innerHTML = `xpos = ${xpos}, ypos = ${ypos}`
+        // ws.send(`${index}`)
+    }
+    
+    function sendWSReq(color) {
+        let index = xpos + ypos * side
+        console.log("sending:", index, color);
+        ws.send(`${index} ${color}`);
     }
 
 
@@ -68,17 +99,20 @@
     }
     function load() {
         get_data().then((data) => {
-            for (let i = 0; i < 100; i++) {
-                for (let j = 0; j < 100; j++) {
-                    let index = i * 100 + j;
-                    let num = data[Math.floor(index / 8)];
-                    if ((num >> (7 - index % 8)) & 1) {
-                        ctx.fillRect(10 * j, 10 * i, 10, 10);
+            for (let i = 0; i < side; i++) {
+                for (let j = 0; j < side; j++) {
+                    let index = i * side + j;
+                    let num = data[Math.floor(index / 2)];
+                    let cind;
+                    if (index % 2 == 0) {
+                        cind = num >> 4;
                     } else {
-                        ctx.fillStyle = 'white';
-                        ctx.fillRect(10 * j, 10 * i, 10, 10);
-                        ctx.fillStyle = 'black';
+                        cind = num % 16;
                     }
+                    ctx.fillStyle = colormap[Object.keys(colormap)[cind]];
+                    console.log("num", num)
+                    console.log("Cind = ", cind, ctx.fillStyle)
+                    ctx.fillRect(10 * j, 10 * i, 10, 10);
                 }
             }
         });
@@ -87,3 +121,26 @@
     load()
     setInterval(load, 60000)
 </script>
+
+<style>
+    .container{
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        border: 1px solid black;
+    }
+    #picker {
+        display: grid;
+        place-items: center;
+        justify-content: center;
+        gap: 5px;
+        grid-template-columns: 40px 40px 40px 40px;
+    }
+    .colorbox {
+        aspect-ratio: 1;
+        width: 40px;
+    }
+    #canvas{
+        border: 1px solid black;
+    }
+</style>

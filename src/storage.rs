@@ -1,4 +1,4 @@
-use std::fs::{read_to_string, write};
+use std::{fs::{read_to_string, write}, u8};
 
 use base64::{engine::general_purpose, Engine as _};
 use bit_vec::BitVec;
@@ -6,30 +6,28 @@ use tokio::sync::broadcast;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub data: BitVec,
+    pub data: Vec<u8>,
     pub counter: u64,
     pub tx: broadcast::Sender<String>
 }
 
-pub fn write_store(data: &BitVec, counter: u64) {
-    let u8data = data.to_bytes();
-    let b64 = general_purpose::STANDARD.encode(&u8data);
+pub fn write_store(data: &Vec<u8>, counter: u64) {
+    let b64 = general_purpose::STANDARD.encode(&data);
     write("./.store", format!("{counter}\n{b64}")).unwrap();
 }
 
-pub fn read_store() -> (BitVec, u64) {
+pub fn read_store() -> (Vec<u8>, u64) {
     let Ok(store) = read_to_string("./.store") else {
-        return (BitVec::from_elem(10000, false), 0);
+        return (vec![u8::MAX; 5000], 0);
     };
     let (counter, data) = store
         .split_once("\n")
         .expect(&format!("No newlines in the store = '{store}'"));
 
-    let u8data = general_purpose::STANDARD
+    let data = general_purpose::STANDARD
         .decode(data)
         .expect(&format!("Invalid base64 = '{data}'"));
-
-    let data = BitVec::from_bytes(&u8data);
+    
     let counter: u64 = counter
         .parse()
         .expect(&format!("Not a u64, counter = {counter}"));
