@@ -4,9 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = "0.7.5"
+axum = { version = "0.7.5", features = ["ws"] }
 base64 = "0.22.1"
 bit-vec = "0.8.0"
 tokio = { version = "1.40.0", features = ["full"] }
-tower-http = { version = "0.5.2", features = ["compression-br", "compression-gzip", "trace"] }
+tower-http = { version = "0.5.2", features = [
+    "compression-br",
+    "compression-gzip",
+    "trace",
+] }
 serde = { version = "1.0.210", features = ["derive"] }
+futures = "0.3.30"
+# tower = { version = "0.5.1", features = ["util"] }

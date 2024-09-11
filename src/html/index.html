@@ -7,19 +7,44 @@
         return Uint8Array.from(binString, (m) => m.codePointAt(0));
     }
 
-    function checkNewBox(canvas, event) {
-        let rect = canvas.getBoundingClientRect();
-        let x = event.clientX - rect.left;
-        let y = event.clientY - rect.top;
-        let index = Math.floor(x / 10) + Math.floor(y / 10) * 100
-        fetch(`/check?id=${index}`).then(load)
-    }
-
     const canvas = document.getElementById("canvas");
     canvas.addEventListener("mousedown", function (e) {
         checkNewBox(canvas, e);
     });
     const ctx = canvas.getContext("2d");
+
+    const ws = new WebSocket("ws://localhost:3000/ws");
+    ws.onopen = () => {
+        console.log("connected");
+    }
+
+    ws.onmessage = (e) => {
+        console.log("received message: " + e.data);
+        let tokens = e.data.split(" ");
+        let index = Number(tokens[0]);
+        let checked = tokens[1] == 'true'
+        let i = Math.floor(index / 100);
+        let j = index % 100;
+        console.log(tokens, index, e[0], checked, i, j);
+        if (checked) {
+            ctx.fillRect(10 * j, 10 * i, 10, 10);
+        } else {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(10 * j, 10 * i, 10, 10);
+            ctx.fillStyle = 'black';
+        }
+    }
+
+
+    function checkNewBox(canvas, event) {
+        let rect = canvas.getBoundingClientRect();
+        let x = event.clientX - rect.left;
+        let y = event.clientY - rect.top;
+        let index = Math.floor(x / 10) + Math.floor(y / 10) * 100
+        // fetch(`/check?id=${index}`).then(load)
+        ws.send(`${index}`)
+    }
+
 
     async function get_data() {
         const resp = await fetch("/refresh");
@@ -42,6 +67,6 @@
             }
         });
     }
-    // load()
-    setInterval(load, 2000)
+    load()
+    // setInterval(load, 2000)
 </script>

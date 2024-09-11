@@ -2,11 +2,13 @@ use std::fs::{read_to_string, write};
 
 use base64::{engine::general_purpose, Engine as _};
 use bit_vec::BitVec;
+use tokio::sync::broadcast;
 
 #[derive(Clone)]
 pub struct AppState {
     pub data: BitVec,
     pub counter: u64,
+    pub tx: broadcast::Sender<String>
 }
 
 pub fn write_store(data: &BitVec, counter: u64) {
