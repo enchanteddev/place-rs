@@ -7,13 +7,25 @@
         return Uint8Array.from(binString, (m) => m.codePointAt(0));
     }
 
+    function convert_to_ws(relative_path) {
+        var loc = window.location, new_uri;
+        if (loc.protocol === "https:") {
+            new_uri = "wss:";
+        } else {
+            new_uri = "ws:";
+        }
+        new_uri += "//" + loc.host;
+        new_uri += loc.pathname + relative_path;
+        return new_uri;
+    }
+
     const canvas = document.getElementById("canvas");
     canvas.addEventListener("mousedown", function (e) {
         checkNewBox(canvas, e);
     });
     const ctx = canvas.getContext("2d");
 
-    const ws = new WebSocket("ws://localhost:3000/ws");
+    const ws = new WebSocket(convert_to_ws("ws"));
     ws.onopen = () => {
         console.log("connected");
     }

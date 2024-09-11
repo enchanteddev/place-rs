@@ -14,11 +14,11 @@ pub struct AppState {
 pub fn write_store(data: &BitVec, counter: u64) {
     let u8data = data.to_bytes();
     let b64 = general_purpose::STANDARD.encode(&u8data);
-    write("./store", format!("{counter}\n{b64}")).unwrap();
+    write("./.store", format!("{counter}\n{b64}")).unwrap();
 }
 
 pub fn read_store() -> (BitVec, u64) {
-    let Ok(store) = read_to_string("./store") else {
+    let Ok(store) = read_to_string("./.store") else {
         return (BitVec::from_elem(10000, false), 0);
     };
     let (counter, data) = store
